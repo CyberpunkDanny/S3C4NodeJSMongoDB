@@ -1,14 +1,8 @@
 const MongoClient = require('mongodb').MongoClient;
-/* MongoClient enables us to connect to Mongo Server*/
-
 const assert = require('assert');
-/* 'assert' module enables us to use the assert to check for True or False values within our app */
-
-/* Starting up connection to server */
+const dboper = require('./operations');
 
 const url = "mongodb://localhost:27017/";
-/* url is where mongodb server can be accessed */
-
 const dbname = 'conFusion';
 
 MongoClient.connect(url, (err, client)=>{
@@ -19,31 +13,27 @@ MongoClient.connect(url, (err, client)=>{
     console.log("Connected correctly to the server\n");
     
     const db = client.db(dbname);
-    /* To connect to the database */
     
-    const collection =  db.collection('dishes');
-    collection.insertOne({"name": "Utthappizza", "description":"Test"}, (err, result)=>{
-        assert.equal(err, null);
-    
-        console.log("After Insert:\n");
-        console.log(result.ops);
-        /* "result.ops" property tells how many operations are carried out successfully */
-    
-        collection.find({}).toArray((err, docs)=>{
-            assert.equal(err, null);
+    dboper.insertDocument(db, {name: "Vadonut", description: "Test"}, 'dishes', (result)=>{
+        console.log("Insert Document: \n", result.ops);
+        
+        dboper.findDocuments(db, 'dishes', (docs)=>{
+            console.log("Found Documents:\n", docs);
             
-            console.log("Found:\n");
-            console.log(docs);
-            
-            db.dropCollection('dishes', (err, result)=>{
-                assert.equal(err, null);
+            dboper.updateDocument(db, {name: 'Vadonut'}, {description: "Updated test"}, 'dishes', (result)=>{
+                console.log("Updated Docment: \n", result.result);
                 
-                client.close();
+                dboper.findDocuments(db, 'dishes', (docs)=>{
+                    console.log("Found Documents:\n"+ docs);
+                    
+                    db.dropCollection('dishes', (result)=>{
+                        console.log("Dropped Collection: ", result);
+                        
+                        client.close();
+                    });
+                });
             });
         });
-        /* find({}) means empty i.e., it returns all the docs */
     });
-    /* insertOne() takes 'JSON document' & a 'callback' function as parameters */
     
 });
-/* connect() takes 'url' and 'callback' function as two parameters */
