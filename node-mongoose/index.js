@@ -8,23 +8,22 @@ const connect = mongoose.connect(url);
 connect.then((db)=>{
     console.log("Connected currenlty to the server");
     
-    var newDish = Dishes({
+    /* create() method takes a new document that is to be stored */
+    Dishes.create({
         name: 'Uthappizza',
         description: 'test'
-    });
-    
-    newDish.save()
-        .then((dish)=>{
+    })
+    .then((dish)=>{
             console.log(dish);
             return Dishes.find({});
-        })
-        .then((dishes)=>{
+    })
+    .then((dishes)=>{
             console.log(dishes);
             return Dishes.remove({});
-        })
-        .then(()=>{
+    })
+    .then(()=>{
             return mongoose.connection.close();
-        })
-        .catch((err)=>console.log(err));
+    })
+    .catch((err)=>console.log(err));
 })
 .catch((err)=>console.log("\n\nError Connecting to Mongo Database \n\n ", err));
