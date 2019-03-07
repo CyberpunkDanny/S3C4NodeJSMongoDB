@@ -30,37 +30,52 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser('12345-67890-09876-54321')); /* signed cookie with secret */
 
-/* Every Middleware right from here will have to go through authorization phase */
 
 function auth(req, res, next){
-    console.log(req.headers);
+    console.log(req.signedCookies);
     
-    var authHeader = req.headers.authorization;
+    if(!req.signedCookies.user){
+        var authHeader = req.headers.authorization;
     
-    if(authHeader == null){
-        var err = new Error("You are not authenticated!");
-        err.status = 401;
-        res.setHeader('WWW-Authenticate', 'Basic');
-        return next(err);
+        if(!authHeader){
+            var err = new Error("You are not authenticated!");
+            err.status = 401;
+            res.setHeader('WWW-Authenticate', 'Basic');
+            return next(err);
+        }
+
+        var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+        /* split() splits the string into elements whenever 'space' is encountered */
+
+        var username = auth[0];
+        var password = auth[1];
+
+        if(username === 'admin' && password === 'password'){
+            res.cookie('user', 'admin', {signed: true} )
+            next();
+        }
+        else {
+            var err = new Error("Incorrect Credentials!");
+            err.status = 401;
+            res.setHeader('WWW-Authenticate', 'Basic');
+            return next(err);
+        }
+        
     }
     
-    var auth = new Buffer(authHeader.split(' ')[1], 'base64').toString().split(':');
-    /* split() splits the string into elements whenever 'space' is encountered */
-    
-    var username = auth[0];
-    var password = auth[1];
-    
-    if(username === 'admin' && password === 'password'){
-        next();
-    }
     else {
-        var err = new Error("Incorrect Credentials!");
-        err.status = 401;
-        res.setHeader('WWW-Authenticate', 'Basic');
-        return next(err);
+        if(req.signedCookies.user === 'admin'){
+            next();
+        }    
+        else {
+            var err = new Error("You are not authenticated!");
+            err.status = 401;
+            return next(err);
+        }
     }
+
 }
 
 app.use(auth);
