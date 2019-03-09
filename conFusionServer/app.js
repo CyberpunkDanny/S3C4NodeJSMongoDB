@@ -6,6 +6,9 @@ var logger = require('morgan');
 var session = require('express-session');
 var FileStore = require('session-file-store')(session);
 
+var passport = require('passport');
+var authenticate = require('./authenticate');
+
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var dishRouter = require('./routes/dishRouter');
@@ -42,25 +45,21 @@ app.use(session({
     store: new FileStore()
 }));
 
-function auth(req, res, next){
-    console.log(req.session);
-    
-    if(!req.session.user){
+app.use(passport.initialize()); /* When user is logged in, this calls 'passport.authenticate()' adds the 'req.user' to request message and then passport session wil serialize user info and store it in session */
+app.use(passport.session());
+
+function auth(req, res, next){ 
+    if(!req.user){
         var err = new Error("You are not authenticated!");
-        err.status = 401;
+        err.status = 403;
         return next(err);
     }
-    else {
-        if(req.session.user === 'authenticated'){
-            next();
-        }
-        else {
-            var err = new Error("You are not authenticated!");
-            err.status = 401;
-            return next(err);
-        }
-    }    
-}
+    else
+    {
+        next();
+    }
+}    
+
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
