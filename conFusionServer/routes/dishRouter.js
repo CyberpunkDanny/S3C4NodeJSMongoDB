@@ -265,30 +265,41 @@ dishRouter.route('/:dishId/comments/:commentId')
     .delete(authenticate.verifyUser, (req, res, next)=>{
         Dishes.findById(req.params.dishId)
             .then((dish)=>{
-                if(dish != null && dish.comments.id(req.params.commentId) != null){
-                    dish.comments.id(req.params.commentId).remove();
-                    dish.save()
-                        .then((dish)=>{
-                            Dishes.findById(dish._id)
-                                .populate('comments.author')
-                                .then((dish)=>{
-                                    res.statusCode = 200;
-                                    res.setHeader('Content-Type', 'application/JSON');       
-                                    res.json(dish);
-                                })
-                        .catch((err)=>{
-                            next();
+                var currUser = req.user._id;
+                var authorUser = dish.comments.id(req.params.commentId).author._id; 
+                console.log("Current: "+ currUser+ "\nAuthor: "+ authorUser);
+                
+                if(currUser.equals(authorUser)){
+                    if(dish != null && dish.comments.id(req.params.commentId) != null){
+                        dish.comments.id(req.params.commentId).remove();
+                        dish.save()
+                            .then((dish)=>{
+                                Dishes.findById(dish._id)
+                                    .populate('comments.author')
+                                    .then((dish)=>{
+                                        res.statusCode = 200;
+                                        res.setHeader('Content-Type', 'application/JSON');       
+                                        res.json(dish);
+                                    })
+                            .catch((err)=>{
+                                next();
+                            })
                         })
-                    })
+                    }
+                    else if(dish == null){
+                        err = new Error('Dish '+ req.params.dishId + ' not found');
+                        err.status = 404;
+                        return next(err);
+                    }
+                    else{
+                        err = new Error('Comment '+ req.params.commentId + ' not found');
+                        err.status = 404;
+                        return next(err);
+                    }
                 }
-                else if(dish == null){
-                    err = new Error('Dish '+ req.params.dishId + ' not found');
-                    err.status = 404;
-                    return next(err);
-                }
-                else{
-                    err = new Error('Comment '+ req.params.commentId + ' not found');
-                    err.status = 404;
+                else {
+                    err = new Error('You are not authorized to perform this operation!');
+                    err.status = 403;
                     return next(err);
                 }
             })
