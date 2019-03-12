@@ -29,6 +29,18 @@ connect.then((db)=>{
 
 var app = express();
 
+/* For all request coming in, we will redirect them to HTTPS server */
+app.all('*', (req, res, next)=>{
+    /* If incoming req is already a secure one i.e., via secure port, then 'req' object will have 'secure' flag set to true */
+    if(req.secure){
+        return next();
+    }
+    else {
+        res.redirect(307, 'https://'+ req.hostname+ ':'+ app.get('secPort')+ req.url);
+    }
+    /* Return status code of 307 is added which represents that the target resource resides temporarily under a different URI and User agent must not agent request message if it performs an automatic redirection to URI */
+});
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
