@@ -12,6 +12,7 @@ var User = new Schema({
         type: String,
         default: ''
     },
+    facebookId: String, /* To accommodate 'facebook' ID as index to our user account */
     admin: {
         type: Boolean,
         default: false
