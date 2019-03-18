@@ -7,10 +7,11 @@ const app = express();
 /* whiteList contains all the origins that the server is willing to accept */
 const whiteList = [
     'http://localhost:3000',
-    'https://localhost:3443'
+    'https://localhost:3443',
+    'http://CyberpunK:3001'
 ];
 
-/* To see if incoming requests belong to whitelisted origins */
+/* To see if incoming requests belong to whitelisted origins */ /* 'computername':3001 will act as Origin */
 var corsOptionsDelegate = (req, callback)=> {
     var corsOptions;
     
